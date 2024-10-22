@@ -1,8 +1,20 @@
+---
+  title: "436 hw 2"
+output:
+  html_document: default
+pdf_document: default
+date: "2024-10-17"
+runtime: shiny
+---
+```{r}
+knitr::opts_chunk$set(warnings = FALSE, message = FALSE)
+```
+
+```{r}
 library(shiny)
 library(ggplot2)
 library(leaflet)
 library(dplyr)
-
 
 df <- read.csv('https://raw.githubusercontent.com/tommy04132002/0041/main/NY-House-Dataset.csv', stringsAsFactors = FALSE)
 
@@ -53,7 +65,7 @@ ui <- fluidPage(
         tabPanel("Average Price Bar Plot", 
                  plotOutput("avgPriceBarPlot"), 
                  dataTableOutput("avgPriceTable")),
-        tabPanel("House Type Map", 
+        tabPanel("House Status Map", 
                  leafletOutput("houseTypeMap"),
                  dataTableOutput("houseTypeTable"))
       )
@@ -71,13 +83,14 @@ server <- function(input, output, session) {
     if (nrow(data) == 0) {
       return()
     }
+    
     ggplot(data, aes(x = reorder(STATE, -avg_price), y = avg_price, fill = num_houses)) +
       geom_bar(stat = "identity", alpha = 0.7) +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
       scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of Houses") +
       labs(title = "Average House Price by Region", 
            x = "Region", y = "Average Price") +
-      coord_cartesian(ylim = c(0, max(data$avg_price) * 1.1))
+      coord_cartesian(ylim = c(0, max(data$avg_price)))
   })
   
   output$avgPriceTable <- renderDataTable({
@@ -103,19 +116,20 @@ server <- function(input, output, session) {
       addTiles() |>
       addCircleMarkers(
         ~LONGITUDE, ~LATITUDE,
-        radius = 5, 
+        radius = 5, # Set point size
         color ="red",
         fillColor ="red",
-        fillOpacity = ~scales::rescale(PRICE, to = c(0.5, 1)), 
+        fillOpacity = ~scales::rescale(PRICE, to = c(0.5, 1)),
         stroke = FALSE, 
-        popup = ~paste("House Type:", TYPE, "<br>",
-                       "Price: $", PRICE, "<br>",
-                       "Address:", ADDRESS, "<br>",
-                       "Baths:", BATH, "<br>",
-                       "Beds:", BEDS, "<br>",
+        popup = ~paste("House Type:", TYPE, 
+                       "Price: $", PRICE, 
+                       "Address:", ADDRESS, 
+                       "Baths:", BATH, 
+                       "Beds:", BEDS,
                        "Property SqFt:", PROPERTYSQFT)
       )
   })
 }
 
 shinyApp(ui, server)
+```
